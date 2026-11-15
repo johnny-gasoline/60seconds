@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Illustrious and Notorious Punk League ADHD Redux</title>
+    <style>
+        :root {
+            --neon-green: #39FF14;
+            --dark-gray: #1a1a1a;
+            --light-gray: #e0e0e0;
+        }
+        body {
+            background-color: #000000;
+            color: var(--light-gray);
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h1 {
+            font-size: 1.2rem;
+            color: white;
+            margin: 0;
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .redux {
+            display: block;
+            font-family: 'Old English Text MT', 'Engravers Old English', 'UnifrakturMaguntia', serif;
+            font-size: 5rem;
+            color: var(--neon-green);
+            text-shadow: 0 0 10px rgba(57, 255, 20, 0.7), 0 0 20px rgba(57, 255, 20, 0.5);
+            margin-top: 10px;
+            line-height: 1;
+        }
+        .search-container {
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2rem;
+            border: 2px solid var(--neon-green);
+            background-color: var(--dark-gray);
+            color: white;
+            border-radius: 8px;
+            box-sizing: border-box;
+            outline: none;
+        }
+        input[type="text"]:focus {
+            box-shadow: 0 0 10px rgba(57, 255, 20, 0.5);
+        }
+        .search-hint {
+            font-size: 0.9rem;
+            color: #888;
+            margin-top: 8px;
+            font-style: italic;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .tab-btn {
+            background-color: var(--dark-gray);
+            color: white;
+            border: 1px solid #333;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+        }
+        .tab-btn:hover, .tab-btn.active {
+            background-color: var(--neon-green);
+            color: black;
+            border-color: var(--neon-green);
+            font-weight: bold;
+        }
+        .spotify-link-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .spotify-link {
+            color: var(--neon-green);
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border: 1px solid var(--neon-green);
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+        .spotify-link:hover {
+            background-color: var(--neon-green);
+            color: black;
+        }
+        .content-area {
+            width: 100%;
+            max-width: 800px;
+        }
+        .song-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .song-item {
+            background-color: var(--dark-gray);
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid var(--neon-green);
+        }
+        .song-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .artist { font-weight: bold; font-size: 1.1rem; color: white; }
+        .title { color: #ccc; }
+        .meta { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: flex-end; 
+            gap: 5px; 
+        }
+        .length { font-family: monospace; color: #888; }
+        .vol-badge {
+            background-color: #333;
+            color: var(--neon-green);
+            font-size: 0.8rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .hidden { display: none; }
+        
+        @import url('https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&display=swap');
+        .redux { font-family: 'UnifrakturMaguntia', serif; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Illustrious and Notorious Punk League<span class="redux">Redux</span></h1>
+    </header>
+
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Search for an artist or song...">
+        <div class="search-hint">The search is VERY generous... terrible spelling allowed.</div>
+    </div>
+
+    <div id="tabsContainer" class="tabs">
+        <button class="tab-btn active" data-target="all">All Volumes / Search Results</button>
+        <!-- Volume tabs will be injected here -->
+    </div>
+
+    <div id="volumeLinkContainer" class="spotify-link-container hidden">
+        <a href="#" id="spotifyLink" class="spotify-link" target="_blank" rel="noopener noreferrer">
+            🎵 Listen to this Volume on Spotify
+        </a>
+    </div>
+
+    <div class="content-area">
+        <ul id="songList" class="song-list"></ul>
+    </div>
+
+    <script>
+        // ==========================================
+        // HOW TO UPDATE WITH NEW VOLUMES:
+        // 1. Add the new Spotify Link to `spotifyLinks`
+        // 2. Paste the new tracklist exactly as formatted into `rawData`
+        // ==========================================
+
+        const spotifyLinks = {
+            "Volume 2": "https://open.spotify.com/playlist/2cj9Pp0m4ekGDXdGanQUD9?si=CY4V9I6yRUqEKU-4_kw2wQ",
+            "Volume 3": "https://open.spotify.com/playlist/4vp7kLyrTUc7qqSudni3Pu?si=ibTcx3RzTH2q7lEoHey_Rg",
+            "Volume 4": "https://open.spotify.com/playlist/3D75pHZd7PV2qfk31usJso?si=EoCmAo2PQRW3pGAlffZXWQ",
+            "Volume 5": "https://open.spotify.com/playlist/3qO89YqWXR2uXqkM2Lm30l?si=j0TqcgY5S_Kd1zyKlN98MA"
+            // Example for Volume 1:
+            // "Volume 1": "https://open.spotify.com/playlist/your_link_here",
+        };
+
+        const rawData = `
+Volume 2: 
+Iron Reagan - Your Kid's an Asshole - 00:00:12
+Jeff Rosenstock - NO TIME - 00:00:54
+The Damned - Stab Yor Back - 00:01:00
+Down To Nothing - No Faith - 00:00:35
+TLE; Crabhammer - Drive Thru Records Was the Best Record Label in the History of Anything, Ever - 00:00:39
+The Bouncing Souls - All of This and Nothing - 00:00:55
+Voorhees - Tornado of Knives - 00:00:27
+The Favorats - Sunshine Baby (Part 2) - 00:00:48
+Bad Religion - I Want Something More - 00:00:47
+Stiff Little Fingers - Here We Are Nowhere - 00:00:58
+Raw Brigade - SHUT UP - 00:00:52
+Sunami - No Heart - 00:00:56
+Knocked Loose - Moss Covers All - 00:00:46
+Dwarves - Let's Fuck - How To Win Friends Version - 00:01:00
+C.C.T.V. - Quiet - 00:00:51
+Nobodys - Ain't No One Getting Laid - 00:00:43
+7 Seconds - 4.1.4.1...Done - 00:00:28
+Magrudergrind - War for Resources - 00:00:57
+Darkbuster - Lenny's A Drunk - 00:00:06
+Wire - It's So Obvious - 2006 Remastered Version - 00:00:53
+The Ataris - The Radio Still Sucks - 00:00:28
+The Queers - I Spent the Rent - 00:00:19
+Guttermouth - Bullshit - 00:00:35
+Napalm Death - You Suffer - 00:00:04
+Skinhead - U.N.S.H. - 00:00:48
+blink-182 - FUCK FACE - 00:00:27
+Dead Kennedys - Hyperactive Child - 00:00:37
+Gype - Chewed Mouth - 00:00:56
+New Bomb Turks - This Place Sucks - 00:00:48
+Sharp Shock - Steps - 00:00:50
+The Weird Lovemakers; Jason Willis; Gerard Schumacher; Greg Petix; Hector Jamie - Letter to Starlog - 00:00:57
+The Mr. T Experience - It's a Long Way Back - 00:00:41
+Ghoulies - Society - 00:01:00
+Karen Dió - 3am - 00:00:51
+Disco Junk - Underage Punk - 00:00:39
+
+Volume 3:
+The Bombpops - I Can't - 00:00:54
+The Jellys - Loser - 00:00:59
+Angry Samoans - Lights Out - 00:00:52
+Chixdiggit! - Great Legs - 00:00:53
+Faith - Don't Tell Me - 00:00:57
+Smoking Popes - They Lied - 00:00:54
+Droids Blood - Cop - 00:00:58
+Ex-Vöid - Ex-Vöid - 00:00:49
+Pavid Vermin - Something - 00:00:58
+Rancid - Blacklisted - 00:00:26
+F.Y.P - Shitheel - 00:00:48
+No Use For A Name - Sara Fisher - 00:00:31
+Mike Wilson - Have a Great Day - 00:00:57
+Less Than Jake - Sobriety Is a Serious Business and Business Isn't so Good - 00:00:47
+Diesel Boy - Punk Rock 201 - 00:00:22
+Crass - System - 00:00:56
+Electric Chair - House of Abuse - 00:00:54
+The First Rule - Where the Fuck Is My Pizza - 00:00:38
+D.R.I. - Give My Taxes Back - 00:00:52
+Minutemen - Fanatics - 00:00:31
+Grade 2 - Gaslight - 00:00:57
+Chain Whip - Something's Gotta Give - 00:00:57
+Rancid - Don Giovanni - 00:00:35
+The Queers - Hi Mom, It's Me! - 00:00:58
+blink-182 - Family Reunion - Live/1999 - 00:00:51
+The Distillers - Old Scratch - 00:00:43
+All - Check One - 00:00:43
+D.I. - Skate or Die - 00:00:51
+The Murderburgers - The Next Time... - 00:00:33
+Dead Kennedys - Hyperactive Child - 00:00:37
+Diesel Boy - C'mon - 00:00:44
+NOFX - See Her Pee - 00:00:31
+
+Volume 4:
+Captain Everything! - Have a Good'un Girl - 00:00:40
+Circle Jerks - Red Tape - 00:00:58
+Hüsker Dü - Punch Drunk - 00:00:32
+Sicko - Attention Span - 00:00:46
+Misfits - Demonomania - 00:00:45
+AJJ - Michael Jordan of Drunk Driving - 00:00:22
+Bruce Lee Band - List - 00:00:41
+No Pressure - NP Style - 00:00:51
+School Drugs - Pathetic. Desperate - 00:00:56
+CIV - Soundtrack for Violence - 00:00:32
+D.O.A. - New Wave Sucks - 00:00:56
+Paramore - Interlude: I'm Not Angry Anymore - 00:00:52
+The Meatmen - Mr. Tapeworm - 00:00:34
+Muscle Cats - Eat In The Nude - 00:00:51
+Descendents - Coffee Mug - 00:00:34
+Night Birds - No Spoilers - 00:00:39
+Bad Religion - 52 Seconds - 00:00:58
+Rancid - Don't Make Me Do It - 00:00:58
+Citric Dummies - I Don't Like Anyone (Not You) - 00:00:56
+S.O.D. Stormtroopers of Death - No Turning Back - 00:00:52
+Naked Raygun - Bombshelter - Remastered - 00:00:50
+Strung Out - Klawsterfobia - 00:00:31
+Jeff Rosenstock - Monday at the Beach - 00:00:56
+Saves The Day - Handsome Boy - 00:01:00
+Savage Remains - Polterguy - 00:00:59
+Dollar Signs - Ugghhhh - 00:00:50
+Minor Threat - Bottled Violence - 00:00:54
+Dead Kennedys - Short Songs - 00:00:28
+Big Break - Prototype - 00:00:55
+Avem - Hovering - 00:00:54
+The Manges - Anti-Heroes - 00:00:58
+Kepi Ghoulie - Hey Kepi Lets Go - 00:00:47
+Ramones - Durango 95 - 2002 Remaster - 00:00:55
+Green Day - Song of the Century - 00:00:57
+
+Volume 5:
+The Steal - Fashionless - 00:00:47
+Chixdiggit! - Quit Your Job - 00:00:25
+The Copyrights - Solid Connex - 00:00:35
+Satanic Surfers - Discontent - 00:00:44
+The Movielife - I Hope You Die Soon - 00:00:27
+Lars Frederiksen and the Bastards - Fight - 00:00:56
+NOFX - Hobophobic (Scared of Bums) - 00:00:48
+Crass - Fight War Not Wars - Remastered - 00:00:30
+Iron Reagan - Power of the Skull - 00:00:49
+This Is A Standoff - No Thanks - 00:00:49
+Sonic Youth - Nic Fit - 00:00:59
+No Use For A Name - Sara Fisher - 00:00:31
+Bracket - Warren'S Song, Pt. 8 - 00:00:30
+Wound Man - Disillusion - 00:00:54
+Corrosion Of Conformity - Rabid Dogs - 00:00:40
+Nomatrix - Like & Follow - 00:00:37
+Big Break - Big Break - 00:00:57
+Black Flag - Wasted - 00:00:51
+Groovie Ghoulies - Doin' Fine - 00:00:35
+Agnostic Front - Victim in Pain - 00:00:48
+JIVEBOMB - Illusion of Choice - 00:00:48
+Spazz - Camp Chestnut - 00:00:47
+Chain Whip - Something's Gotta Give - 00:00:57
+Less Than Jake - Anchor - Live - 00:01:36
+United Mutation - Wake Up - 00:00:29
+Modest Mouse - Horn Intro - 00:00:09
+Table Sugar - Hot Cola - 00:00:25
+Madball - Never Had It - 00:00:56
+The Distillers - Old Scratch - 00:00:43
+Swingin' Utters - Here We Are Nowhere - 2022 Remaster - 00:00:58
+Shook Ones - Panic Attack on the Terraces - 00:00:43
+Tightwire - Pentagram Tattoo - 00:00:57
+House Boat - Every Day - 2026 - 00:00:31
+The Budweisers - High School Party - 00:00:49
+Mob 47 - Rustning Är Ett Brott - 00:00:59
+Screeching Weasel - Dirty Needles - 00:00:27
+Joyce Manor - DFHP - 00:00:54
+Karen Dió - 3am - 00:00:51
+Dean Dirg - Be Smart Be Quick - 00:00:55
+Ecca Vandal - DANCE IN DEBT - 00:00:33
+        `;
+
+        const allSongs = [];
+        const volumesList = [];
+
+        // Parse the raw data
+        function parseData() {
+            const lines = rawData.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            let currentVol = '';
+
+            lines.forEach(line => {
+                if (line.toLowerCase().startsWith('volume')) {
+                    currentVol = line.replace(':', '').trim();
+                    if (!volumesList.includes(currentVol)) {
+                        volumesList.push(currentVol);
+                    }
+                } else if (line.includes('-')) {
+                    // Expecting: Artist - Title - Length
+                    const parts = line.split(' - ');
+                    if (parts.length >= 3) {
+                        const length = parts.pop();
+                        const artist = parts[0];
+                        const title = parts.slice(1).join(' - '); // Re-join if title had a dash
+                        allSongs.push({
+                            volume: currentVol,
+                            artist: artist,
+                            title: title,
+                            length: length,
+                            searchStr: (artist + " " + title).toLowerCase()
+                        });
+                    }
+                }
+            });
+        }
+
+        // Levenshtein Distance for Generous Fuzzy Search
+        function levenshtein(a, b) {
+            if(a.length === 0) return b.length;
+            if(b.length === 0) return a.length;
+            const matrix = [];
+            for(let i = 0; i <= b.length; i++) { matrix[i] = [i]; }
+            for(let j = 0; j <= a.length; j++) { matrix[0][j] = j; }
+            for(let i = 1; i <= b.length; i++) {
+                for(let j = 1; j <= a.length; j++) {
+                    if(b.charAt(i-1) == a.charAt(j-1)) {
+                        matrix[i][j] = matrix[i-1][j-1];
+                    } else {
+                        matrix[i][j] = Math.min(matrix[i-1][j-1] + 1, Math.min(matrix[i][j-1] + 1, matrix[i-1][j] + 1));
+                    }
+                }
+            }
+            return matrix[b.length][a.length];
+        }
+
+        function isFuzzyMatch(query, text) {
+            if (!query) return true;
+            
+            // Clean strings
+            query = query.toLowerCase().replace(/[^a-z0-9]/g, '');
+            text = text.toLowerCase().replace(/[^a-z0-9]/g, '');
+            
+            // Direct substring match (catches exact partial words)
+            if (text.includes(query)) return true;
+
+            // Loose generous match: Does text contain all characters of query in order?
+            let qIdx = 0;
+            for(let i=0; i < text.length && qIdx < query.length; i++){
+                if(text[i] === query[qIdx]) qIdx++;
+            }
+            if (qIdx === query.length) return true;
+
+            // Check words individually with Levenshtein for terrible spelling
+            // If the query is close enough to any word in the text (distance <= 2 for words > 4 chars)
+            const textWords = text.split(/\s+/);
+            for (let word of textWords) {
+                if (word.length > 3 && levenshtein(query, word) <= 2) return true;
+                if (word.length <= 3 && levenshtein(query, word) <= 1) return true;
+            }
+
+            return false;
+        }
+
+        function renderTabs() {
+            const tabsContainer = document.getElementById('tabsContainer');
+            volumesList.forEach(vol => {
+                const btn = document.createElement('button');
+                btn.className = 'tab-btn';
+                btn.dataset.target = vol;
+                btn.innerText = vol;
+                btn.addEventListener('click', () => switchTab(vol, btn));
+                tabsContainer.appendChild(btn);
+            });
+            
+            document.querySelector('.tab-btn[data-target="all"]').addEventListener('click', (e) => switchTab('all', e.target));
+        }
+
+        function switchTab(targetVol, btnElement) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btnElement.classList.add('active');
+
+            const linkContainer = document.getElementById('volumeLinkContainer');
+            const linkTag = document.getElementById('spotifyLink');
+            
+            if (targetVol !== 'all' && spotifyLinks[targetVol]) {
+                linkContainer.classList.remove('hidden');
+                linkTag.href = spotifyLinks[targetVol];
+                linkTag.innerHTML = `🎵 Listen to ${targetVol} on Spotify`;
+            } else {
+                linkContainer.classList.add('hidden');
+            }
+
+            document.getElementById('searchInput').value = '';
+            
+            let filtered;
+            if (targetVol === 'all') {
+                filtered = allSongs;
+            } else {
+                filtered = allSongs.filter(s => s.volume === targetVol);
+            }
+            renderSongs(filtered);
+        }
+
+        function renderSongs(songsToRender) {
+            const list = document.getElementById('songList');
+            list.innerHTML = '';
+            
+            if (songsToRender.length === 0) {
+                list.innerHTML = '<div style="text-align:center; padding: 20px;">No matching songs found.</div>';
+                return;
+            }
+
+            songsToRender.forEach(song => {
+                const li = document.createElement('li');
+                li.className = 'song-item';
+                
+                li.innerHTML = `
+                    <div class="song-info">
+                        <span class="artist">${song.artist}</span>
+                        <span class="title">${song.title}</span>
+                    </div>
+                    <div class="meta">
+                        <span class="vol-badge">${song.volume}</span>
+                        <span class="length">${song.length}</span>
+                    </div>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        function handleSearch(e) {
+            const query = e.target.value;
+            
+            // Switch to ALL tab visually without triggering full switchTab logic
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.tab-btn[data-target="all"]').classList.add('active');
+            document.getElementById('volumeLinkContainer').classList.add('hidden');
+
+            const filtered = allSongs.filter(s => isFuzzyMatch(query, s.searchStr));
+            renderSongs(filtered);
+        }
+
+        // Initialize
+        parseData();
+        renderTabs();
+        renderSongs(allSongs);
+
+        document.getElementById('searchInput').addEventListener('input', handleSearch);
+
+    </script>
+</body>
+</html>
